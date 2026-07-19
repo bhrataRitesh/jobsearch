@@ -88,6 +88,7 @@ def run_phase2_careers_finder(
             website = f"https://{website}"
 
         careers_url = "NOT_FOUND"
+        homepage_succeeded = False
 
         # ── Step 1: Fetch homepage and look for career links ──
         try:
@@ -98,6 +99,7 @@ def run_phase2_careers_finder(
                 allow_redirects=True,
             )
             resp.raise_for_status()
+            homepage_succeeded = True
 
             from bs4 import BeautifulSoup
 
@@ -127,15 +129,15 @@ def run_phase2_careers_finder(
         except Exception as e:
             logger.debug(f"Failed to fetch {website}: {e}")
 
-        # ── Step 2: Try fallback paths if no link found ──
-        if careers_url == "NOT_FOUND":
+        # ── Step 2: Try fallback paths if no link found and homepage succeeded ──
+        if careers_url == "NOT_FOUND" and homepage_succeeded:
             for path in fallback_paths:
                 test_url = urljoin(website, path)
                 try:
                     resp = requests.head(
                         test_url,
                         headers=headers,
-                        timeout=10,
+                        timeout=5,  # Reduced fallback timeout to 5s for speed
                         allow_redirects=True,
                     )
                     if resp.status_code == 200:
