@@ -125,6 +125,7 @@ def run_phase2_careers_finder(
     ):
         website = row.get("website", "")
         company_name = row.get("company_name", "")
+        naukri_profile_url = website if "naukri.com" in website else ""
 
         # If website is missing, NOT_FOUND, or is a Naukri profile page, resolve to official homepage
         if not website or website == "NOT_FOUND" or "naukri.com" in website:
@@ -132,11 +133,19 @@ def run_phase2_careers_finder(
             if resolved_web != "NOT_FOUND":
                 website = resolved_web
             else:
-                result = row.to_dict()
-                result["careers_url"] = "NOT_FOUND"
-                result["ats_type"] = "unknown"
-                result["ats_token"] = ""
-                results.append(result)
+                # Fallback to Naukri profile if it exists
+                if naukri_profile_url:
+                    result = row.to_dict()
+                    result["careers_url"] = naukri_profile_url
+                    result["ats_type"] = "naukri"
+                    result["ats_token"] = ""
+                    results.append(result)
+                else:
+                    result = row.to_dict()
+                    result["careers_url"] = "NOT_FOUND"
+                    result["ats_type"] = "unknown"
+                    result["ats_token"] = ""
+                    results.append(result)
                 continue
 
         # Ensure website has a scheme
@@ -224,6 +233,12 @@ def run_phase2_careers_finder(
 
         # ── Step 5: Extract ATS token ──
         ats_token = _extract_ats_token(careers_url, ats_type)
+
+        # Fallback to Naukri profile if careers_url wasn't found but naukri_profile_url exists
+        if careers_url == "NOT_FOUND" and naukri_profile_url:
+            careers_url = naukri_profile_url
+            ats_type = "naukri"
+            ats_token = ""
 
         result = row.to_dict()
         result["careers_url"] = careers_url
