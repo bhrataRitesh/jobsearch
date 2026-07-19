@@ -18,6 +18,7 @@ from .generic_scraper import GenericScraper
 from .greenhouse_scraper import GreenhouseScraper
 from .lever_scraper import LeverScraper
 from .workday_scraper import WorkdayScraper
+from .naukri_scraper import NaukriScraper
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ SCRAPER_MAP = {
     "greenhouse": GreenhouseScraper,
     "lever": LeverScraper,
     "workday": WorkdayScraper,
+    "naukri": NaukriScraper,
     "generic": GenericScraper,
 }
 
