@@ -1,0 +1,75 @@
+# Target city — overridden by CLI argument if provided
+city: "Mumbai"
+
+# Keywords used to filter job titles in Phase 4
+job_title_keywords:
+  - "software engineer"
+  - "software developer"
+  - "backend"
+  - "back-end"
+  - "frontend"
+  - "front-end"
+  - "full stack"
+  - "fullstack"
+  - "sde"
+  - "python developer"
+  - "java developer"
+  - "node developer"
+  - "devops"
+  - "site reliability"
+  - "sre"
+  - "mobile developer"
+  - "android developer"
+  - "ios developer"
+  - "data engineer"
+  - "qa engineer"
+  - "sdet"
+  - "cloud engineer"
+  - "machine learning engineer"
+  - "platform engineer"
+
+# Google Places API query templates (used in Phase 1)
+discovery_queries:
+  - "software development company in {city}"
+  - "IT company in {city}"
+  - "technology startup in {city}"
+
+# Rate limiting
+rate_limit:
+  min_delay_seconds: 1.5
+  max_delay_seconds: 3.0
+
+# Retry config (used by tenacity)
+retry:
+  max_attempts: 3
+  initial_wait_seconds: 2
+  max_wait_seconds: 30
+
+# HTTP client
+http:
+  timeout_seconds: 15
+  user_agent: "JobSearchBot/1.0 (Educational project; contact: your-email@example.com)"
+
+# Phase 2 - Careers page detection
+careers_page:
+  url_keywords:
+    - "career"
+    - "careers"
+    - "jobs"
+    - "join-us"
+    - "join"
+    - "work-with-us"
+    - "hiring"
+    - "openings"
+    - "opportunities"
+  fallback_paths:
+    - "/careers"
+    - "/jobs"
+    - "/careers/"
+    - "/about/careers"
+    - "/join-us"
+    - "/work-with-us"
+    - "/en/careers"
+
+# Job description summary truncation length
+description_summary_max_chars: 300
