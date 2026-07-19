@@ -20,14 +20,65 @@ Algorithm:
 import logging
 import re
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 import pandas as pd
 import requests
 import yaml
+from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_official_website(company_name: str) -> str:
+    """
+    Search DuckDuckGo HTML search to find the official website for a company name.
+    Filters out common directory and social media sites.
+    """
+    query = f"{company_name} official website"
+    encoded_query = quote_plus(query)
+    url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+    
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+    }
+    try:
+        resp = requests.get(url, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, "lxml")
+            links = soup.select(".result__url")
+            for link in links:
+                href = link.text.strip()
+                # filter out search engines, social media, and directories
+                if any(
+                    x in href.lower()
+                    for x in [
+                        "duckduckgo.com",
+                        "naukri.com",
+                        "clutch.co",
+                        "linkedin.com",
+                        "facebook.com",
+                        "youtube.com",
+                        "glassdoor",
+                        "ambitionbox",
+                        "instagram.com",
+                        "twitter.com",
+                        "f6s.com",
+                        "goodfirms.co",
+                    ]
+                ):
+                    continue
+                # Return the first clean website link
+                if not href.startswith("http"):
+                    href = f"https://{href}"
+                return href
+    except Exception as e:
+        logger.debug(f"Failed to resolve website for {company_name}: {e}")
+    return "NOT_FOUND"
 
 
 def run_phase2_careers_finder(
@@ -75,13 +126,18 @@ def run_phase2_careers_finder(
         website = row.get("website", "")
         company_name = row.get("company_name", "")
 
-        if not website or website == "NOT_FOUND":
-            result = row.to_dict()
-            result["careers_url"] = "NOT_FOUND"
-            result["ats_type"] = "unknown"
-            result["ats_token"] = ""
-            results.append(result)
-            continue
+        # If website is missing, NOT_FOUND, or is a Naukri profile page, resolve to official homepage
+        if not website or website == "NOT_FOUND" or "naukri.com" in website:
+            resolved_web = resolve_official_website(company_name)
+            if resolved_web != "NOT_FOUND":
+                website = resolved_web
+            else:
+                result = row.to_dict()
+                result["careers_url"] = "NOT_FOUND"
+                result["ats_type"] = "unknown"
+                result["ats_token"] = ""
+                results.append(result)
+                continue
 
         # Ensure website has a scheme
         if not website.startswith("http"):
